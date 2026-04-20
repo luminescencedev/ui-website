@@ -6,7 +6,9 @@ import { usePathname } from 'next/navigation';
 import { NAV } from './nav';
 
 // Flat ordered list of all pages
-const ALL_PAGES = NAV.flatMap((section) => section.items);
+const ALL_PAGES = NAV.flatMap(
+  (section) => section.items as readonly { label: string; href: string }[],
+);
 
 export function PageNav() {
   const pathname = usePathname();
