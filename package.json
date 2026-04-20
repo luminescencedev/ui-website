@@ -15,7 +15,8 @@
     "react-dom": "^19.2.0",
     "motion": "^11.0.0",
     "clsx": "^2.0.0",
-    "shiki": "^3.0.0"
+    "shiki": "^3.0.0",
+    "@carabine/ui": "file:../ui"
   },
   "devDependencies": {
     "typescript": "^6.0.0",
