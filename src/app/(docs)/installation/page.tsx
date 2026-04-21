@@ -1,5 +1,5 @@
 import React from 'react';
-import { PageHeader, H2, Prose, Codeblock } from '@/components/docs/shared';
+import { PageHeader, H2, Prose, Codeblock, PackageManagerBlock } from '@/components/docs/shared';
 
 export const metadata = {
   title: 'Installation — carabine/ui',
@@ -15,11 +15,7 @@ export default function InstallationPage() {
       />
 
       <H2>Install the package</H2>
-      <Codeblock>{`npm install @carabine/ui
-# or
-pnpm add @carabine/ui
-# or
-yarn add @carabine/ui`}</Codeblock>
+      <PackageManagerBlock />
 
       <H2>Peer dependencies</H2>
       <Prose>Requires React 18 or 19 and react-dom.</Prose>

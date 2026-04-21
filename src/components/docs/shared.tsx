@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CodePreview } from '@carabine/ui';
+import { CodePreview, CopyButton } from '@carabine/ui';
 
 // ─── PageHeader ───────────────────────────────────────────────────────────────
 
@@ -44,8 +44,48 @@ export function IC({ children }: { children: React.ReactNode }) {
 export function Codeblock({ children }: { children: string }) {
   return (
     <div className="codeblock">
+      <div className="codeblock-copy">
+        <CopyButton value={children} />
+      </div>
       <pre>
         <code>{children}</code>
+      </pre>
+    </div>
+  );
+}
+
+// ─── PackageManagerBlock ──────────────────────────────────────────────────────
+
+type PM = 'npm' | 'pnpm' | 'yarn' | 'bun';
+
+const PM_COMMANDS: Record<PM, string> = {
+  npm: 'npm install @carabine/ui',
+  pnpm: 'pnpm add @carabine/ui',
+  yarn: 'yarn add @carabine/ui',
+  bun: 'bun add @carabine/ui',
+};
+
+export function PackageManagerBlock() {
+  const [active, setActive] = React.useState<PM>('npm');
+
+  return (
+    <div className="codeblock">
+      <div className="pm-header">
+        <div className="pm-tabs">
+          {(['npm', 'pnpm', 'yarn', 'bun'] as PM[]).map((pm) => (
+            <button
+              key={pm}
+              className={`pm-tab${active === pm ? ' pm-tab--active' : ''}`}
+              onClick={() => setActive(pm)}
+            >
+              {pm}
+            </button>
+          ))}
+        </div>
+        <CopyButton value={PM_COMMANDS[active]} />
+      </div>
+      <pre style={{ background: '#fafafa', padding: '16px 24px', margin: 0, overflowX: 'auto' }}>
+        <code>{PM_COMMANDS[active]}</code>
       </pre>
     </div>
   );
