@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@carabine/ui':
-        specifier: 0.2.3
-        version: 0.2.3(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        specifier: 0.2.4
+        version: 0.2.4(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       clsx:
         specifier: ^2.0.0
         version: 2.1.1
@@ -58,8 +58,8 @@ packages:
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
     engines: {node: '>=10'}
 
-  '@carabine/ui@0.2.3':
-    resolution: {integrity: sha512-FfdG2Lry8YfzS5ft3uK9iR7WoNxdOP4NIpPRB+nCqBv+ca/7jVWIjaCf0BLhgAS84Ei6555NjVwnpRknj0N30g==}
+  '@carabine/ui@0.2.4':
+    resolution: {integrity: sha512-BtnuJrknNN/zETUAOy0Ed0D0AlTE0XbHAobIb9NryZPqmepqX3cinyQ0K8eZ4qVfgDXPU9TbL8oKvYATcPeeCg==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
@@ -772,7 +772,7 @@ snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
 
-  '@carabine/ui@0.2.3(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+  '@carabine/ui@0.2.4(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
       react: 19.2.5
       react-dom: 19.2.5(react@19.2.5)
