@@ -29,6 +29,7 @@ export const NAV = [
       { label: 'Toggle', href: '/components/toggle' },
       { label: 'CodePreview', href: '/components/code-preview' },
       { label: 'CopyButton', href: '/components/copy-button' },
+      { label: 'Selector', href: '/components/selector' },
     ],
   },
   {

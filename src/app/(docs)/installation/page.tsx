@@ -25,12 +25,14 @@ export default function InstallationPage() {
       <Prose>
         Import directly. No CSS file to configure — styles are bundled and injected automatically.
       </Prose>
-      <Codeblock>{`import { Tooltip, Toggle, CodePreview } from '@carabine/ui';
+      <Codeblock>{`import { Tooltip, Toggle, CodePreview, CopyButton, Selector } from '@carabine/ui';
 
 // Sub-path imports for better tree-shaking
 import { Tooltip }     from '@carabine/ui/tooltip';
 import { Toggle }      from '@carabine/ui/toggle';
-import { CodePreview } from '@carabine/ui/code-preview';`}</Codeblock>
+import { CodePreview } from '@carabine/ui/code-preview';
+import { CopyButton }  from '@carabine/ui/copy-button';
+import { Selector }    from '@carabine/ui/selector';`}</Codeblock>
     </div>
   );
 }
