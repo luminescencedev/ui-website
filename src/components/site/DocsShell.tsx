@@ -119,7 +119,7 @@ export function DocsShell({ children }: { children: ReactNode }) {
         {/* The rail. No panel, no border, no shadow — it sits on the raw canvas,
             and the edge you read as its boundary is the panel's rounded corner. */}
         <aside
-          className="rail fixed inset-y-0 left-0 z-30 flex-col py-5"
+          className="rail fixed inset-y-0 left-0 z-30 flex-col pb-5"
           inert={!rail || undefined}
         >
           {/*
@@ -334,9 +334,18 @@ export function DocsShell({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * The mark, and the version beside it.
+ *
+ * `h-14`, with no padding above it, because the bar in the column to the right
+ * is `h-14` measured from the same top edge — so the two rows centre on the same
+ * line and the wordmark reads level with the breadcrumb rather than nine pixels
+ * under it. It was `h-9` inside a `py-5` rail, which is the same total height by
+ * accident and a different centre on purpose by nobody.
+ */
 function Brand() {
   return (
-    <Link href="/" className="press flex h-9 items-center gap-2">
+    <Link href="/" className="press flex h-14 items-center gap-2">
       <span className="text-[14px] font-semibold tracking-tight" style={{ color: 'var(--fg)' }}>
         carabine
       </span>
