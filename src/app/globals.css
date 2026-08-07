@@ -485,6 +485,13 @@ html[data-theme='dark'] {
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 0.08em 0.34em;
+  /*
+   * An identifier has no spaces in it, so a line of prose cannot break one and
+   * a long one pushes the whole column wider than the phone holding it.
+   * `anywhere` lets the break happen inside the token — ugly on one line, and
+   * the alternative is a page that scrolls sideways.
+   */
+  overflow-wrap: anywhere;
 }
 
 /*
@@ -595,6 +602,10 @@ html[data-theme='dark'] {
   .toc-rail {
     display: block;
   }
+
+  .toc-column {
+    max-width: min(44rem, calc(100% - 24rem));
+  }
 }
 
 /*
@@ -618,8 +629,22 @@ html[data-theme='dark'] {
   color: var(--fg-muted);
 }
 
+/*
+ * The reading column, and why the interesting half of this rule lives up in the
+ * container query rather than here.
+ *
+ * There it is `min(44rem, calc(100% - 24rem))`: 44rem, or whatever is left once
+ * the rail's side and its mirror image are taken off — which is what keeps the
+ * column centred while it gives the rail room.
+ *
+ * Applied unconditionally, that subtraction goes negative the moment the panel
+ * is narrower than the allowance. On a 375px phone it computes to −49px, a
+ * negative `max-width` clamps to zero, and the whole reading column disappears.
+ * A rule that only makes sense while something is on screen belongs where that
+ * thing is decided.
+ */
 .toc-column {
-  max-width: min(44rem, calc(100% - 24rem));
+  max-width: 44rem;
 }
 
 /*

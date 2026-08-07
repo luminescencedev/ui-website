@@ -180,7 +180,7 @@ export function OtpBasic() {
   const [code, setCode] = useState('');
 
   return (
-    <OtpInput theme={theme} length={6} groups={3} size={42} value={code} onValueChange={setCode} />
+    <OtpInput theme={theme} length={6} groups={3} size={36} value={code} onValueChange={setCode} />
   );
 }
 

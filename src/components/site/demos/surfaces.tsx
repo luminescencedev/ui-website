@@ -290,12 +290,12 @@ export function SkeletonShapes() {
   const { theme } = useTheme();
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex flex-wrap items-center justify-center gap-4">
       <Skeleton theme={theme} circle height={44} />
-      <div className="w-[180px]">
+      <div className="w-[140px] max-w-full">
         <Skeleton theme={theme} width={['80%', '55%']} height={10} gap={8} />
       </div>
-      <div className="w-[120px]">
+      <div className="w-[110px] max-w-full">
         <Skeleton theme={theme} ratio={16 / 9} radius={10} />
       </div>
     </div>

@@ -36,8 +36,19 @@ export async function Example({
       className="overflow-hidden rounded-xl"
       style={{ border: '1px solid var(--border)', marginBlock: 20 }}
     >
+      {/*
+       * The stage is the hard limit. A component that insists on being wider
+       * than the column — six OTP cells at 42px, a row of shapes — is scrolled
+       * here rather than allowed to push the page out: a demo that breaks the
+       * layout is worse than a demo that is cut off, because only one of the two
+       * is obviously the demo's problem.
+       *
+       * `min-w-0` because this sits in a flex column, where the default
+       * `min-width: auto` refuses to shrink below the content and hands the
+       * overflow straight back to the page.
+       */}
       <div
-        className="flex items-center justify-center px-6"
+        className="flex min-w-0 items-center justify-center overflow-x-auto px-6"
         style={{
           minHeight: tall ? 360 : 190,
           paddingBlock: 34,
