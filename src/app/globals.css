@@ -1,881 +1,715 @@
-/* ===================================================================
-   @carabine/ui Docs — shadcn/ui-style documentation, light mode
-   =================================================================== */
+@import 'tailwindcss';
 
-/* ── Reset ───────────────────────────────────────────────────────── */
+/*
+ * ── Two Tailwind builds on one page ──────────────────────────────────────────
+ *
+ * This site runs its own Tailwind *and* imports the library's compiled sheet, in
+ * that order, the way a consumer would. Both write into `@layer utilities`, so
+ * for anything they both define the cascade falls back to document order and the
+ * library — imported second — wins.
+ *
+ * That matters in exactly one place: `display`. The rail carried
+ * `hidden shell:flex`, and the library's `.hidden` landed after our
+ * `.shell:flex`, so the rail was `display: none` at 1920px while the 264px
+ * reserved for it stayed — because `.with-rail` is plain CSS and had no such
+ * fight to lose.
+ *
+ * Two things that do **not** fix it, both tried:
+ *
+ * — `layer(carabine)` under Tailwind's layers. It puts the library beneath
+ *   `base`, which is preflight, which opens with
+ *   `*, ::before, ::after { margin: 0; padding: 0 }`. The library is compiled
+ *   *without* preflight — a package that resets a consumer's page is a package
+ *   nobody keeps — so that one rule then beat every `px-3.5` and `gap-2.5` in
+ *   every component. The command palette came out with its icons flush against
+ *   its own frame, and it read as a broken component rather than a broken import.
+ * — `@layer theme, base, components, carabine, utilities;` to put it back above
+ *   `base`. The bundler does not emit that statement at all, so the order it
+ *   declares never reaches the browser.
+ *
+ * What is left is the honest one: the two toggles that collide are written in
+ * plain CSS below, outside every layer, where nothing named `.hidden` can reach
+ * them. Two declarations instead of a cascade trick.
+ */
+@import '@carabine/ui/styles.css';
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+/*
+ * `dark:` keys off the attribute the site writes, never off the operating
+ * system. The library has no `dark:` variants at all for the same reason: they
+ * resolve from the OS, so they fire on a light page running on a dark-mode
+ * machine. There the theme is a prop; here it is one attribute on `<html>`.
+ */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+@theme {
+  --font-sans: var(--font-instrument);
+  --font-mono: var(--font-jetbrains);
+  /* One word uses this, and nothing else does. */
+  --font-serif: var(--font-instrument-serif);
+
+  /*
+   * ── No `--radius-*` here, and that is the whole point ──────────────────────
+   *
+   * This block used to retune every Tailwind radius — `lg` from 0.5rem to 0.75,
+   * `2xl` from 1 to 1.25 — on the reasoning that a large radius on a small
+   * control looks cheap. Which is true, and it was still wrong.
+   *
+   * The library's components are styled with those same utilities, and once its
+   * stylesheet sits in a lower layer, *this* theme is the one they resolve
+   * against. Every radius inside every component shifted a quarter of a rem, and
+   * the visible casualty was the command palette: its two bezels are concentric
+   * by construction — the inner corner is the outer minus the gap — and a theme
+   * that moves one of the two moves them out of agreement. The frame stopped
+   * reading as a frame.
+   *
+   * So the shared keys stay at their defaults, and anything this site wants a
+   * particular radius for says the number where it uses it. A consumer's theme
+   * is not a safe place to keep a component's arithmetic.
+   */
+
+  /* Soft, two-layer, never heavy. A close contact shadow plus an ambient one. */
+  --shadow-soft: 0 1px 2px rgb(9 9 11 / 0.04), 0 4px 16px rgb(9 9 11 / 0.04);
+  --shadow-panel: 0 1px 2px rgb(9 9 11 / 0.05), 0 8px 32px rgb(9 9 11 / 0.06);
+
+  /*
+   * The library's only easing, and it retargets Tailwind's `ease-out` utility —
+   * so every `ease-out` on this site is the same curve as every transition in
+   * every component on it.
+   */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+
+  /*
+   * The width at which the documentation gets its rail, and it is not `lg`.
+   *
+   * 1024 is the breakpoint everything else uses, and it is the wrong one here:
+   * a laptop window at 1000px is a window with room for a 264px rail and a 700px
+   * column, and sending it the phone layout — a burger, a drawer, no rail — is
+   * answering a question nobody asked. 896 is where that stops being true.
+   */
+  --breakpoint-shell: 56rem;
 }
 
-/* ── Design tokens ───────────────────────────────────────────────── */
-
+/*
+ * ── Tokens ───────────────────────────────────────────────────────────────────
+ *
+ * The shape is `canvas / surface / surface-muted / surface-sunken / border /
+ * fg / fg-muted / fg-subtle`, which separates *what a thing is* from *what
+ * colour it happens to be*. The values are the library's.
+ *
+ * There is one accent, and it appears exactly twice on the whole site: the glow
+ * under the card, and the one word in the headline. Everything else is zinc. A
+ * library whose default accent is neutral on purpose should not have a site that
+ * argues with it.
+ */
 :root {
-  --bg: #ffffff;
-  --bg-hover: #f5f5f5;
-  --bg-subtle: #fafafa;
-  --border: #ebebeb;
-  --border-light: #f2f2f2;
-  --text: #111111;
-  --text-2: #555555;
-  --text-3: #aaaaaa;
-  --accent-bg: #efefef;
-  --primary: #6366f1;
-  --green: #22c55e;
-
-  --sidebar-w: 220px;
-  --topbar-h: 57px;
-  --content-max: 760px;
+  /* The same blue the word is lit with, so the page has one accent and not two
+     that nearly match — which reads worse than two that clearly differ. */
+  --accent: #4a86ff;
+  /*
+   * A second hue, and it is not invented either: it is from the outer ring of
+   * this library's own colour picker. Two glows of different temperature read as
+   * light in a room; one reads as a coloured rectangle behind a card.
+   */
+  --accent-far: #b372de;
 }
-
-/* ── Base ────────────────────────────────────────────────────────── */
 
 html {
+  --canvas: #ffffff;
+  --surface: #ffffff;
+  --surface-muted: #fafafa;
+  --surface-sunken: #f4f4f5;
+
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
+
+  --fg: #09090b;
+  --fg-muted: #71717a;
+  --fg-subtle: #a1a1aa;
+
+  /*
+   * The hover list's bar, to the value. Anything on this site that follows a
+   * pointer uses it, so the sidebar and a `<HoverList />` on a docs page are
+   * visibly the same gesture rather than two things that nearly match.
+   *
+   * A tint, not a surface: no hairline, no shadow, and what is under it shows
+   * through. That is what separates a highlight from a panel appearing under
+   * the cursor.
+   */
+  --bar: rgba(24, 24, 27, 0.05);
+
+  /* The bezel, and it is the toast's: an inner top highlight over ambient
+     depth. What makes a frame read as machined rather than drawn. */
+  --bezel:
+    inset 0 1px 0 rgb(255 255 255 / 0.5), 0 1px 2px rgb(9 9 11 / 0.05),
+    0 14px 40px -12px rgb(9 9 11 / 0.12);
+
+  color-scheme: light;
+}
+
+html[data-theme='dark'] {
+  --canvas: #09090b;
+  --surface: #131316;
+  --surface-muted: #1c1c21;
+  --surface-sunken: #0f0f12;
+
+  --border: #26262c;
+  --border-strong: #3a3a43;
+
+  --fg: #ededed;
+  --fg-muted: #a1a1aa;
+  --fg-subtle: #71717a;
+
+  --bar: rgba(255, 255, 255, 0.07);
+
+  --bezel:
+    inset 0 1px 0 rgb(255 255 255 / 0.06), 0 1px 2px rgb(0 0 0 / 0.4),
+    0 16px 44px -12px rgb(0 0 0 / 0.6);
+
+  color-scheme: dark;
+}
+
+/*
+ * Flat. No grid, no dots, no noise, no mesh. The dotted stage belonged to the
+ * playground, where its whole job was to catch a panel claiming to be opaque —
+ * that is a workbench's job, not a front page's.
+ */
+html {
+  background-color: var(--canvas);
+  color: var(--fg);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-synthesis-weight: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--text);
-  background: var(--bg);
-}
-
-/* ── Topbar ──────────────────────────────────────────────────────── */
-
-.topbar {
-  position: fixed;
-  inset: 0 0 auto 0;
-  height: var(--topbar-h);
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(12px) saturate(1.5);
-  -webkit-backdrop-filter: blur(12px) saturate(1.5);
-  border-bottom: 1px solid var(--border);
-  z-index: 100;
-}
-
-.topbar-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 100%;
-  padding: 0 24px;
-}
-
-.topbar-logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  font-family: inherit;
-  text-decoration: none;
-  color: inherit;
-}
-
-.topbar-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.topbar-brand {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-  letter-spacing: -0.015em;
-}
-
-.topbar-version {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-3);
-  background: var(--accent-bg);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 1px 6px;
-  letter-spacing: 0;
-}
-
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.topbar-badge {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--primary);
-  background: rgba(99, 102, 241, 0.07);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  border-radius: 4px;
-  padding: 2px 7px;
-}
-
-.topbar-gh {
-  display: inline-flex;
-  align-items: center;
-  color: var(--text-2);
-  transition: color 120ms;
-  text-decoration: none;
-}
-
-.topbar-gh:hover {
-  color: var(--text);
-}
-
-/* ── Body layout ─────────────────────────────────────────────────── */
-
-.docs-root {
-  min-height: 100vh;
-}
-
-.docs-body {
-  display: flex;
-  padding-top: var(--topbar-h);
-  min-height: 100vh;
-}
-
-/* ── Sidebar ─────────────────────────────────────────────────────── */
-
-.sidebar {
-  position: fixed;
-  top: var(--topbar-h);
-  left: 0;
-  width: var(--sidebar-w);
-  height: calc(100vh - var(--topbar-h));
-  overflow-y: auto;
-  overflow-x: hidden;
-  background: #fafafa;
-  border-right: 1px solid #ebebeb;
-  padding: 8px 12px 24px;
+/*
+ * ── Scrollbars ───────────────────────────────────────────────────────────────
+ *
+ * The default one is a piece of operating-system furniture standing inside a
+ * design: light grey on a dark page, wide enough to shove a rounded panel's
+ * corner out of the way, and drawn with a track that reads as a second border.
+ *
+ * Three things fix it, and the third is the one people skip:
+ *
+ * 1. **Thin.** 10px of box, but the thumb is inset by a 3px transparent border
+ *    with `background-clip: padding-box`, so what you see is 4px. The extra box
+ *    is the hit area — a 4px target is a scrollbar you cannot grab.
+ * 2. **No track.** Transparent. A track is a line down the edge of every
+ *    scrolling thing, and this design already has hairlines that mean something.
+ * 3. **It only exists while it is needed.** The thumb is transparent at rest and
+ *    fades in on hover of the scrolling element. Scroll position is legible from
+ *    the content; a permanent bar is a permanent claim on the edge of the panel.
+ *
+ * What is deliberately *not* here is `scrollbar-gutter: stable`. It stops the
+ * reflow when a scrollbar appears, at the cost of an empty channel on every
+ * element that might one day scroll — which is exactly the space this is trying
+ * to give back.
+ */
+* {
   scrollbar-width: thin;
-  scrollbar-color: #e4e4e7 transparent;
-  z-index: 50;
-  transition:
-    transform 260ms cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 260ms cubic-bezier(0.4, 0, 0.2, 1);
+  scrollbar-color: transparent transparent;
 }
 
-.sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding-top: 8px;
+*:hover,
+*:focus-within {
+  scrollbar-color: var(--border-strong) transparent;
 }
 
-.sidebar-group {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
 
-.sidebar-group-label {
-  padding: 2px 8px 6px;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  color: #aaaaaa;
-  user-select: none;
-}
-
-.sidebar-item {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  height: 30px;
-  padding: 0 8px;
-  border: none;
-  border-radius: 7px;
-  background: none;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  color: #333333;
-  text-align: left;
-  cursor: pointer;
-  text-decoration: none;
-  transition:
-    background 120ms ease,
-    color 120ms ease;
-}
-
-.sidebar-item:hover {
-  background: #efefef;
-  color: #111111;
-}
-
-.sidebar-item--active {
-  background: #efefef;
-  color: #111111;
-  font-weight: 500;
-}
-
-/* ── Mobile menu button ──────────────────────────────────────────── */
-
-.mobile-menu-btn {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-  border-radius: 6px;
-  color: var(--text);
-  flex-shrink: 0;
-  transition: background 120ms;
-}
-
-.mobile-menu-btn:hover {
-  background: var(--bg-hover);
-}
-
-.menu-icon {
-  position: relative;
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.icon-hamburger,
-.icon-close {
-  position: absolute;
-  transition:
-    opacity 200ms ease,
-    transform 200ms ease;
-}
-
-.icon-close {
-  opacity: 0;
-  transform: rotate(-45deg) scale(0.75);
-}
-
-.menu-icon--open .icon-hamburger {
-  opacity: 0;
-  transform: rotate(45deg) scale(0.75);
-}
-
-.menu-icon--open .icon-close {
-  opacity: 1;
-  transform: rotate(0deg) scale(1);
-}
-
-/* ── Sidebar overlay ─────────────────────────────────────────────── */
-
-.sidebar-overlay {
-  display: none;
-}
-
-/* ── Main content ────────────────────────────────────────────────── */
-
-.docs-main {
-  flex: 1;
-  margin-left: var(--sidebar-w);
-  min-width: 0;
-  display: flex;
-  justify-content: center;
-}
-
-.docs-content {
-  width: 100%;
-  max-width: var(--content-max);
-  padding: 48px 60px 120px;
-}
-
-/* ── Page header ─────────────────────────────────────────────────── */
-
-.docs-page {
-  display: flex;
-  flex-direction: column;
-}
-
-.page-header {
-  padding-bottom: 28px;
-  margin-bottom: 8px;
-  border-bottom: 1px solid var(--border);
-}
-
-.page-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 5px;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  background: var(--accent-bg);
-  color: var(--text-3);
-  border: 1px solid var(--border);
-  margin-bottom: 12px;
-}
-
-.page-title {
-  font-size: 1.875rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.15;
-  color: var(--text);
-  margin-bottom: 12px;
-}
-
-.page-desc {
-  font-size: 15px;
-  color: var(--text-2);
-  line-height: 1.65;
-  max-width: 560px;
-}
-
-/* ── Section headings ────────────────────────────────────────────── */
-
-.section-h2 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  letter-spacing: -0.015em;
-  color: var(--text);
-  margin: 36px 0 14px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
-  scroll-margin-top: calc(var(--topbar-h) + 16px);
-}
-
-.section-h3 {
-  font-size: 0.875rem;
-  font-weight: 600;
-  letter-spacing: -0.005em;
-  color: var(--text);
-  margin: 20px 0 10px;
-}
-
-.prose {
-  font-size: 14px;
-  color: var(--text-2);
-  line-height: 1.65;
-  margin-bottom: 14px;
-}
-
-/* ── Inline code ─────────────────────────────────────────────────── */
-
-.ic {
-  font-family: 'SF Mono', 'Geist Mono', 'Fira Code', ui-monospace, Menlo, Monaco, monospace;
-  font-size: 0.8125em;
-  background: var(--accent-bg);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 1px 5px;
-  color: var(--text);
-}
-
-/* ── Code blocks ─────────────────────────────────────────────────── */
-
-.codeblock {
-  position: relative;
-  border-radius: 10px;
-  overflow: hidden;
-  margin: 16px 0;
-  border: 1px solid var(--border);
-}
-
-.codeblock-copy {
-  position: absolute;
-  top: 14px;
-  right: 10px;
-  z-index: 1;
-}
-
-.codeblock pre {
-  background: #fafafa;
-  padding: 20px 24px;
-  overflow-x: auto;
-  margin: 0;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
-}
-
-.codeblock code {
-  color: #1e293b;
-  font-family:
-    'SF Mono', 'Geist Mono', 'Fira Code', 'JetBrains Mono', ui-monospace, Menlo, Monaco, monospace;
-  font-size: 12.5px;
-  line-height: 1.75;
-  background: none;
-  border: none;
-  padding: 0;
-  white-space: pre;
-}
-
-/* ── Package manager tabs block ──────────────────────────────────── */
-
-.pm-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  background: #fafafa;
-  border-bottom: 1px solid #ebebeb;
-  gap: 12px;
-}
-
-.pm-tabs {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  background: rgba(0, 0, 0, 0.04);
-  border-radius: 8px;
-  padding: 3px;
-}
-
-.pm-tab {
-  display: inline-flex;
-  align-items: center;
-  padding: 5px 12px;
-  border: none;
-  border-radius: 6px;
+::-webkit-scrollbar-track {
   background: transparent;
-  color: #aaaaaa;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
+  transition: background-color 150ms var(--ease-out);
+}
+
+:hover::-webkit-scrollbar-thumb,
+:focus-within::-webkit-scrollbar-thumb {
+  background-color: var(--border-strong);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--fg-subtle);
+}
+
+/* The corner where two bars meet, which otherwise paints the OS grey. */
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Tailwind 4 defaults buttons to `cursor: default`. Keep the pointer. */
+button:not(:disabled),
+[role='button']:not(:disabled) {
   cursor: pointer;
-  transition:
-    background 120ms ease,
-    color 120ms ease,
-    box-shadow 120ms ease;
-  white-space: nowrap;
-  user-select: none;
 }
 
-.pm-tab:hover:not(.pm-tab--active) {
-  color: #555555;
-  background: rgba(0, 0, 0, 0.04);
+::selection {
+  background-color: var(--fg);
+  color: var(--canvas);
 }
 
-.pm-tab--active {
-  background: #ffffff;
-  color: #111111;
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.1),
-    0 1px 2px rgba(0, 0, 0, 0.06);
-}
-
-/* ── Props table ─────────────────────────────────────────────────── */
-
-.props-wrap {
-  width: 100%;
-  overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  margin: 12px 0 24px;
-}
-
-.props-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.props-table thead {
-  background: var(--bg-subtle);
-  border-bottom: 1px solid var(--border);
-}
-
-.props-table th {
-  padding: 9px 14px;
-  text-align: left;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  color: var(--text-3);
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.props-table td {
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--border-light);
-  vertical-align: top;
-  line-height: 1.5;
-}
-
-.props-table tr:last-child td {
-  border-bottom: none;
-}
-
-.prop-name {
-  font-family: 'SF Mono', 'Geist Mono', ui-monospace, monospace;
-  font-size: 12px;
-  color: var(--primary);
-  background: none;
-  border: none;
-  padding: 0;
-  white-space: nowrap;
-}
-
-.prop-req {
-  color: #ef4444;
-  margin-left: 1px;
-}
-
-.prop-type {
-  font-family: 'SF Mono', 'Geist Mono', ui-monospace, monospace;
-  font-size: 11.5px;
-  color: var(--text-2);
-  background: var(--accent-bg);
-  border-radius: 3px;
-  padding: 1px 5px;
-  white-space: nowrap;
-}
-
-.prop-default {
-  font-family: 'SF Mono', 'Geist Mono', ui-monospace, monospace;
-  font-size: 11.5px;
-  color: var(--text-2);
-  background: var(--accent-bg);
-  border-radius: 3px;
-  padding: 1px 5px;
-}
-
-.prop-empty {
-  color: var(--text-3);
-}
-
-.prop-desc {
-  color: var(--text-2);
-  font-size: 13px;
-}
-
-/* ── Intro cards ─────────────────────────────────────────────────── */
-
-.intro-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 10px;
-  margin: 28px 0 8px;
-}
-
-.intro-card {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 5px;
-  padding: 18px 16px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  cursor: pointer;
-  text-align: left;
-  font-family: inherit;
-  text-decoration: none;
-  color: inherit;
-  transition:
-    border-color 120ms,
-    box-shadow 120ms;
-}
-
-.intro-card:hover {
-  background: #fafafa;
-  border-color: #d8d8d8;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-}
-
-.intro-card-icon {
-  font-size: 18px;
-  margin-bottom: 2px;
-}
-
-.intro-card-title {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text);
-  letter-spacing: -0.01em;
-}
-
-.intro-card-desc {
-  font-size: 12.5px;
-  color: var(--text-2);
-  line-height: 1.4;
-}
-
-/* ── Feature list ────────────────────────────────────────────────── */
-
-.feature-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  margin: 12px 0;
-}
-
-.feature-list li {
-  font-size: 14px;
-  color: var(--text-2);
-  line-height: 1.55;
-  padding-left: 20px;
+/*
+ * ── The one word ─────────────────────────────────────────────────────────────
+ *
+ * The only serif on the site, and the only place the accent appears as type. A
+ * typeface change inside a grotesque headline does more work than any effect
+ * could: the eye lands on it before it has read anything.
+ *
+ * Five things make it, and dropping any one of them flattens it: the serif
+ * italic, a **vertical** blue ramp clipped to the glyphs, a hairline text stroke,
+ * two drop shadows for the bloom, and a caret that keeps blinking after the word
+ * has landed. All CSS — so it stays crisp at any pixel density, costs nothing at
+ * runtime, and the word remains text.
+ */
+.living {
   position: relative;
+  display: inline-block;
+
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.035em;
+
+  /*
+   * ── Why the padding, and why the matching negative margin ──────────────────
+   *
+   * `background-clip: text` clips the background to the glyphs, but the
+   * background box is still the element's **padding box** — and a serif italic
+   * at `line-height: 1.02` has ascenders that reach past it. Anything outside
+   * that box gets no gradient at all, which is the top of every letter rendering
+   * transparent.
+   *
+   * So the box is grown until it contains the glyphs, and pulled back by exactly
+   * the same amount so nothing in the line moves. The horizontal half also gives
+   * the italic's right side bearing and the bloom somewhere to live instead of
+   * hanging over the neighbouring word.
+   */
+  padding: 0.18em 0.08em;
+  margin: -0.18em -0.08em;
+
+  /*
+   * Vertical, not horizontal. A ramp running top to bottom lights the ascenders
+   * and lets the baseline fall away, which is what makes the word read as lit
+   * rather than as tinted — a sideways gradient just looks like two colours.
+   */
+  background-image: linear-gradient(
+    180deg,
+    var(--lit-1),
+    var(--lit-2) 35%,
+    var(--lit-3) 65%,
+    var(--lit-4)
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+
+  /* The hairline is what stops a clipped gradient reading as washed out: it
+     gives the glyph an edge the fill does not have. */
+  -webkit-text-stroke: var(--lit-stroke);
+  filter: var(--lit-bloom);
 }
 
-.feature-list li::before {
-  content: '✓';
+/*
+ * The sweep. `content: attr(data-text)` redraws the same glyphs in the same
+ * place, clipped to a moving band of white — so the light travels *through* the
+ * letters rather than over a box containing them.
+ *
+ * `inset` matches the padding above, or the copy sits a fifth of an em off its
+ * original and the whole word looks doubled.
+ */
+.living::after {
+  content: attr(data-text);
   position: absolute;
-  left: 0;
-  color: var(--green);
-  font-size: 12px;
-  font-weight: 700;
-  top: 2px;
+  inset: 0.18em 0.08em;
+
+  background-image: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgb(255 255 255 / 0.65) 48%,
+    transparent 72%
+  );
+  background-size: 230% 100%;
+  background-position: 120% 0;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+
+  opacity: 0.45;
+  animation: living-sweep 3.2s ease-in-out infinite;
 }
 
-.feature-list li strong {
-  color: var(--text);
+@keyframes living-sweep {
+  0%,
+  30% {
+    background-position: 130% 0;
+  }
+  70%,
+  100% {
+    background-position: -130% 0;
+  }
+}
+
+/*
+ * The ramp, per theme. The dark values are the reference's. On white the pale
+ * top stop disappears and the bloom reads as a print artefact, so light gets a
+ * deeper ramp and no glow — the serif and the blue are the meaning, and both
+ * survive.
+ */
+html {
+  --lit-1: #4a86ff;
+  --lit-2: #2465ff;
+  --lit-3: #1552ed;
+  --lit-4: #1141b8;
+  --lit-stroke: 0.35px rgb(21 82 237 / 0.35);
+  --lit-bloom: none;
+}
+
+html[data-theme='dark'] {
+  --lit-1: #91bdff;
+  --lit-2: #4a86ff;
+  --lit-3: #2465ff;
+  --lit-4: #1552ed;
+  --lit-stroke: 0.35px rgb(153 193 255 / 0.65);
+  --lit-bloom: drop-shadow(0 0 1px rgb(164 202 255 / 0.9))
+    drop-shadow(0 0 5px rgb(38 105 255 / 0.38));
+}
+
+/*
+ * Reduced motion keeps the word — the serif, the colour and the bloom are
+ * meaning, not decoration — and stops the light and the caret moving. The caret
+ * stays visible rather than vanishing: it is part of the picture.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .living::after {
+    animation: none;
+  }
+}
+
+/*
+ * The site's focus ring, and it is scoped on purpose.
+ *
+ * A blanket `:focus-visible` rule hits every component in the library too — and
+ * every one of them already draws its own ring, sized to its own shape. The
+ * result was two rings, and on a field it appeared the instant you clicked:
+ * `<input>` matches `:focus-visible` on a mouse click by specification, because
+ * it accepts keyboard input the moment it has focus.
+ *
+ * So this applies only to chrome the site itself renders — links, and anything
+ * carrying `.press`, which is the site's own convention for a pressable thing.
+ * The components keep their rings, and there is exactly one per control.
+ */
+:where(a, .press):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/*
+ * ── Type ─────────────────────────────────────────────────────────────────────
+ *
+ * Instrument Sans carries the voice; JetBrains Mono carries every number,
+ * property name and identifier — including inside running prose. This library's
+ * writing is full of `offsetWidth` and `0.22, 1, 0.36, 1`, and letting mono
+ * interrupt the sentence is a texture that comes from the content rather than
+ * from a font choice.
+ *
+ * `tracking-tight` on every heading, and no `clamp()` below the hero: the scale
+ * steps at breakpoints rather than sliding, so a heading is never caught at a
+ * size nobody chose.
+ */
+.display {
+  font-weight: 600;
+  letter-spacing: -0.028em;
+  text-wrap: balance;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+}
+
+.prose-site {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+.prose-site strong {
+  color: var(--fg);
   font-weight: 600;
 }
 
-/* ── Responsive ──────────────────────────────────────────────────── */
+.prose-site em {
+  font-style: italic;
+}
 
-@media (max-width: 768px) {
-  .mobile-menu-btn {
+.prose-site a {
+  color: var(--fg);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 150ms var(--ease-out);
+}
+
+.prose-site a:hover {
+  text-decoration-color: var(--fg);
+}
+
+/* Inline identifiers. A change of voice, not a box. */
+.prose-site code,
+.tick {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  color: var(--fg);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.08em 0.34em;
+}
+
+/*
+ * ── The frame ────────────────────────────────────────────────────────────────
+ *
+ * The library's own two bezels, at the size of a page section: a shell that is
+ * only ever seen as a ring, and a core the content is read against. The radii
+ * are concentric — outer minus the gap — or the corners run at each other.
+ */
+.bezel {
+  padding: 6px;
+  border-radius: 28px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  box-shadow: var(--bezel);
+  /*
+   * The frame is the hard limit. Anything inside that insists on being wider
+   * than its column is clipped here rather than pushing the whole card past the
+   * gutter — a demo that breaks the page layout is worse than a demo that is cut
+   * off, because only one of the two is obviously a demo's problem.
+   */
+  min-width: 0;
+  overflow: hidden;
+}
+
+.bezel-core {
+  border-radius: 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+/* Corners tighten with the viewport: a 28px radius on a 340px card is a pill. */
+@media (max-width: 640px) {
+  .bezel {
+    padding: 5px;
+    border-radius: 20px;
+  }
+
+  .bezel-core {
+    border-radius: 15px;
+  }
+}
+
+/*
+ * ── The docs rail ────────────────────────────────────────────────────────────
+ *
+ * Width and padding, on one variable, animating together. It is a CSS
+ * transition rather than Motion for the same reason press feedback is: this one
+ * must not wait behind whatever else has the main thread, and it is chrome — the
+ * page is not asking to be interrupted mid-collapse.
+ *
+ * The rail is the only thing that moves. The panel's `padding-left` follows the
+ * same variable on the same curve, so the two edges never separate.
+ */
+/*
+ * Plain CSS, and that is the point — see the note at the top of this file. These
+ * three own every `display` decision the shell makes, so none of them is a
+ * utility that a second Tailwind build can outrank.
+ */
+.rail {
+  display: none;
+  width: var(--rail);
+  overflow: hidden;
+  transition: width 220ms var(--ease-out);
+}
+
+/* Narrow: the drawer's trigger. Wide: the rail's own toggle. Never both. */
+.when-narrow {
+  display: grid;
+}
+
+.when-wide {
+  display: none;
+}
+
+@media (min-width: 56rem) {
+  .rail {
     display: flex;
   }
 
-  .sidebar {
-    top: calc(var(--topbar-h) + 8px);
-    left: 8px;
-    height: calc(100vh - var(--topbar-h) - 16px);
-    border-radius: 12px;
-    transform: translateX(calc(-100% - 24px));
-    box-shadow: none;
-    transition:
-      transform 340ms cubic-bezier(0.32, 0.72, 0, 1),
-      box-shadow 340ms cubic-bezier(0.32, 0.72, 0, 1);
-  }
-
-  .sidebar--open {
-    transform: translateX(0);
-    box-shadow:
-      0 8px 40px rgba(0, 0, 0, 0.14),
-      0 2px 8px rgba(0, 0, 0, 0.07),
-      0 0 0 1px rgba(0, 0, 0, 0.04);
-  }
-
-  .sidebar-overlay {
-    display: block;
-    position: fixed;
-    inset: 0;
-    background: rgba(9, 9, 11, 0.35);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
-    z-index: 40;
-    animation: overlay-in 220ms ease;
-  }
-
-  @keyframes overlay-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  .docs-main {
-    margin-left: 0;
-  }
-
-  .docs-content {
-    padding: 32px 20px 80px;
-  }
-
-  .topbar-badge {
+  .when-narrow {
     display: none;
   }
 
-  .intro-cards {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .page-nav-label {
-    font-size: 12.5px;
+  .when-wide {
+    display: grid;
   }
 }
 
-@media (max-width: 480px) {
-  .intro-cards {
-    grid-template-columns: 1fr;
-  }
+/*
+ * ── The page's own rail ──────────────────────────────────────────────────────
+ *
+ * Plain CSS, outside every layer, for the same reason `.rail` above is: this
+ * decides a `display`, and the library's stylesheet — imported after ours —
+ * carries its own `.hidden { display: none }`. Same layer, same specificity, so
+ * the last one wins, and the last one was the package's. The rail was
+ * `display: none` at every width, on a screen with room for three of them.
+ *
+ * The query is on the **panel**, not the window, so closing the left sidebar
+ * gives this the room it was short of.
+ */
+.toc-rail {
+  display: none;
+}
 
-  .page-nav {
-    flex-direction: column;
-  }
-
-  .page-nav-link {
-    max-width: 100%;
-  }
-
-  .page-nav-link--next {
-    align-items: flex-start;
-    margin-left: 0;
+@container (min-width: 52rem) {
+  .toc-rail {
+    display: block;
   }
 }
 
-/* ── Page nav (prev / next) ──────────────────────────────────────── */
-
-.page-nav {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 64px;
-  padding-top: 24px;
-  border-top: 1px solid var(--border);
+/*
+ * The reading column keeps the middle of the panel and gives ground to the rail
+ * rather than letting it overlap: at any width it is 44rem or whatever is left
+ * once the rail's side and its mirror image are taken off, whichever is less.
+ * That is what keeps it centred while it shrinks.
+ */
+/*
+ * Colour is the only thing a row says, and it says it in CSS.
+ *
+ * Written here rather than as a utility for the reason the rest of this block
+ * exists: the library's stylesheet lands after ours, and hover on a link is one
+ * more place two builds would fight over the same declaration.
+ */
+.toc-row {
+  transition: color 150ms var(--ease-out);
 }
 
-.page-nav-link {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 14px 18px;
+.toc-row:hover {
+  color: var(--fg-muted);
+}
+
+.toc-column {
+  max-width: min(44rem, calc(100% - 24rem));
+}
+
+/*
+ * The panel travels to an anchor instead of jumping to it.
+ *
+ * On the scroller rather than on `html`, because in this shell `html` never
+ * scrolls — a `scroll-behavior` there would be a declaration with nothing to
+ * apply to. The reduced-motion block further down turns it back to `auto`, and
+ * that is the one case where movement really is removed rather than softened:
+ * a page that slides two thousand pixels is the thing that makes people ill.
+ */
+.docs-scroll {
+  scroll-behavior: smooth;
+}
+
+@media (min-width: 56rem) {
+  .with-rail {
+    /*
+     * `max`, because the two ends of this animation want different things. Open,
+     * the gutter *is* the rail's own right padding and the column starts at 264.
+     * Closed, there is no rail to draw a gutter, and a panel flush against the
+     * window edge with 20px of canvas on the other three sides reads as a layout
+     * that lost a column rather than one that closed a panel.
+     */
+    padding-left: max(var(--rail), 20px);
+    transition: padding-left 220ms var(--ease-out);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail,
+  .with-rail {
+    transition: none;
+  }
+}
+
+.card {
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  text-decoration: none;
-  color: inherit;
-  min-width: 0;
-  max-width: calc(50% - 6px);
-  flex: 1;
+  /* The number, where it is used. See the note in `@theme`. */
+  border-radius: 20px;
+  box-shadow: var(--shadow-soft);
+}
+
+/*
+ * Everything pressable gives — in CSS rather than in Motion, because this one
+ * must not wait behind whatever else has the main thread. It is the movement a
+ * dropped frame ruins.
+ */
+.press {
   transition:
-    border-color 120ms,
-    box-shadow 120ms;
+    background-color 150ms var(--ease-out),
+    border-color 150ms var(--ease-out),
+    color 150ms var(--ease-out),
+    transform 120ms var(--ease-out);
 }
 
-.page-nav-link:hover {
-  background: #fafafa;
-  border-color: #d8d8d8;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+.press:active {
+  transform: scale(0.98);
 }
 
-.page-nav-link--prev {
-  align-items: flex-start;
+/* Shiki writes both themes; the site picks one with the same attribute. */
+.shiki,
+.shiki span {
+  color: var(--shiki-light);
 }
 
-.page-nav-link--next {
-  align-items: flex-end;
-  margin-left: auto;
+html[data-theme='dark'] .shiki,
+html[data-theme='dark'] .shiki span {
+  color: var(--shiki-dark);
 }
 
-.page-nav-dir {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-3);
-  letter-spacing: 0.01em;
+.shiki {
+  background: transparent !important;
+  font-size: 12.5px;
+  line-height: 1.7;
 }
 
-.page-nav-label {
-  font-size: 13.5px;
-  font-weight: 500;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-
-/* ── 404 Not Found ───────────────────────────────────────────────── */
-
-.not-found {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 40px 24px;
-  background: var(--bg);
-}
-
-.not-found-inner {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 24px;
-}
-
-.not-found-code {
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: var(--text);
-  white-space: nowrap;
-}
-
-.not-found-divider {
-  width: 1px;
-  height: 40px;
-  background: var(--border);
-  flex-shrink: 0;
-}
-
-.not-found-body {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.not-found-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text);
-  letter-spacing: -0.01em;
-}
-
-.not-found-desc {
-  font-size: 13px;
-  color: var(--text-2);
-  line-height: 1.5;
-}
-
-.not-found-btn {
-  display: inline-flex;
-  align-items: center;
-  height: 32px;
-  padding: 0 14px;
-  background: transparent;
-  color: var(--text-2);
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  font-size: 13px;
-  font-weight: 450;
-  text-decoration: none;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition:
-    border-color 120ms,
-    color 120ms;
-}
-
-.not-found-btn:hover {
-  color: var(--text);
-  border-color: #c0c0c0;
-}
-
-@media (max-width: 480px) {
-  .not-found-inner {
-    flex-direction: column;
-    text-align: center;
-    gap: 20px;
+/* Reduced motion is gentler, not absent: position and scale go, colour stays. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 
-  .not-found-divider {
-    width: 40px;
-    height: 1px;
+  .press:active {
+    transform: none;
   }
 }

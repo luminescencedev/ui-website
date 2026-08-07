@@ -1,30 +1,32 @@
 {
   "name": "ui-carabine-studio",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "private": true,
+  "homepage": "https://ui.carabine.studio",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\""
   },
   "dependencies": {
-    "@carabine/ui": "0.2.4",
-    "clsx": "^2.0.0",
-    "motion": "^11.0.0",
-    "next": "^16.2.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "shiki": "^3.0.0"
+    "@carabine/ui": "^1.0.0",
+    "lucide-react": "^1.28.0",
+    "motion": "^12.43.0",
+    "next": "^16.3.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "shiki": "^4.4.2"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.0",
-    "@types/node": "^22.0.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "postcss": "^8.0.0",
-    "tailwindcss": "^4.1.0",
-    "typescript": "^6.0.0"
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^26.1.2",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "postcss": "^8.5.25",
+    "prettier": "^3.9.6",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2"
   }
 }
